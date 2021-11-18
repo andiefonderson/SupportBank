@@ -6,8 +6,9 @@ namespace SupportBank
 {
     internal class Program
     {
-        static string path = @"C:\Users\Andrea.Fonderson\OneDrive - IRIS Software Group\Corndel Bootcamp\C Sharp Bootcamp\2 - SupportBank\Data Files\Transactions2014.csv";
-        static string[] fileByLines = File.ReadAllLines(path);
+        static string fileFor2014 = @"C:\Users\Andrea.Fonderson\OneDrive - IRIS Software Group\Corndel Bootcamp\C Sharp Bootcamp\2 - SupportBank\Data Files\Transactions2014.csv";
+        static string fileFor2015 = @"C:\Users\Andrea.Fonderson\OneDrive - IRIS Software Group\Corndel Bootcamp\C Sharp Bootcamp\2 - SupportBank\Data Files\DodgyTransactions2015.csv";
+        static string[] fileByLines = File.ReadAllLines(fileFor2014);
 
         static Dictionary<string, double> accountMoneyOwedOnly = new Dictionary<string, double>();
         static Dictionary<string, string> accountFullDetails = new Dictionary<string, string>();
@@ -18,28 +19,10 @@ namespace SupportBank
         }
 
         static void ProgramStartUp()
-        {       
-            for (int i = 1; i < fileByLines.Length; i++)
-            {
-                string[] cell = fileByLines[i].Split(",");
-                string date = cell[0];
-                string fromName = cell[1];
-                string toName = cell[2];
-                string narrative = cell[3];
-                double amount = double.Parse(cell[4]);
-
-                string accountLineText = $"{date}: [Incoming] Paid {amount:C} by {toName} for {narrative}";
-                string accountPaidOtherLineText = $"{date}: [Outgoing] Paid {amount:C} to {fromName} for {narrative}";
-
-                TotalOwedMoney(fromName, amount);
-                TotalOwedMoney(toName, -amount);
-                ListAccountDetails(fromName, accountLineText);
-                ListAccountDetails(toName, accountPaidOtherLineText);
-            }
-
-            MainMenu();         
+        {
+            LoadData();
+            MainMenu();
         }
-
         static void MainMenu()
         {
             Console.WriteLine("Please select the number of the task you want to carry out." +
@@ -49,10 +32,10 @@ namespace SupportBank
             switch (Console.ReadLine())
             {
                 case "1":
-                    ListAllAccounts(accountMoneyOwedOnly);
+                    ListAmountOutstanding.ListAllAccounts(accountMoneyOwedOnly);
                     break;
                 case "2":
-                    ListFullAccountTransactions();
+                    FullAccountTransactionListing.ListAll(accountFullDetails);
                     break;
                 default:
                     Console.WriteLine("That was not a valid choice. Please try again.");
@@ -63,80 +46,42 @@ namespace SupportBank
             ReturnToMainMenu();
         }
 
-        static void ListFullAccountTransactions()
-        {
-            string nameList = "";
+        static void LoadData()
+        {       
+            FileWriter.ClearLog();
 
-            if (accountFullDetails.Count != 0)
+            for (int i = 1; i < fileByLines.Length; i++)
             {
-                Console.WriteLine("\nPlease select whose account you want to access from the following:");
-                foreach (var name in accountFullDetails)
-                {
-                    nameList += $"{name.Key} | ";
-                }
-
-                Console.WriteLine(nameList);
-
+                string[] cell = fileByLines[i].Split(",");
                 try
-                {
-                    ListAccountName(Console.ReadLine());
+                {                    
+                    DateTime date = DateTime.Parse(cell[0]);
+                    string fromName = cell[1];
+                    string toName = cell[2];
+                    string narrative = cell[3];
+                    double amount = double.Parse(cell[4]);
+
+                    string accountLineText = $"{date:d}: [Incoming] Paid {amount:C} by {toName} for {narrative}";
+                    string accountPaidOtherLineText = $"{date:d}: [Outgoing] Paid {amount:C} to {fromName} for {narrative}";
+
+                    ListAmountOutstanding.CalculateAmountsOwed(accountFullDetails, accountMoneyOwedOnly, fromName, toName, amount, accountLineText, accountPaidOtherLineText);
                 }
-                catch (Exception)
+                catch (FormatException ex)
                 {
-                    Console.WriteLine("\nYou didn't input a valid name. Please try again.");
-                    ListAccountName(Console.ReadLine());
+                    string errorLineData = $"Line data - Date: {cell[0]} | From: {cell[1]} | To: {cell[2]} | Narrative: {cell[3]} | Amount: {cell[4]}";
+
+                    Console.WriteLine($"An error occurred on line {i}. This line's data was not imported to the list. \n{errorLineData}" +
+                        $"\nIf you would like for this data to be included in the following reports, please close the program, amend this line, and try again.\n\n");
+                    FileWriter.WriteNewLine($"Formatting issue with row {i}: {ex.Message} \n{errorLineData}");
+                    continue;
+                }catch (Exception ex)
+                {
+                    FileWriter.WriteNewLine($"Issue with row {i}: {ex.Message}" +
+                        $"\nLine data - Date: {cell[0]} | From: {cell[1]} | To: {cell[2]} | Narrative: {cell[3]} | Amount: {cell[4]}\n");
+                    continue;
                 }
-            }
-            else { Console.WriteLine("\nNo names were found within this document to enable an account search."); }
-
-            Console.WriteLine("\nWould you like to search for another account? If so, type 'Y'.");
-            if(Console.ReadLine().ToUpper() == "Y")
-            {
-                ListFullAccountTransactions();
-            }
-
-        }
-
-        private static void ListAccountDetails(string name, string lineText)
-        {
-            if (!accountFullDetails.ContainsKey(name))
-            {
-                accountFullDetails.Add(name, $"{name} Statement \n{lineText}");
-            }
-            else { accountFullDetails[name] += $"\n{lineText}"; }
-        }
-
-        private static void TotalOwedMoney(string name, double amount)
-        {
-            if (!accountMoneyOwedOnly.ContainsKey(name))
-            {
-                accountMoneyOwedOnly.Add(name, amount);
-            }
-            else
-            {
-                accountMoneyOwedOnly[name] += amount;
-            }
-        }
-
-        static void ListAllAccounts(Dictionary<string, double> accountBook)
-        {
-            foreach (var line in accountBook)
-            {
-                if(line.Value < 0)
-                {
-                    Console.WriteLine($"{line.Key} is owed {-line.Value:C}.");
-                }
-                else
-                {
-                    Console.WriteLine($"{line.Key} owes {line.Value:C}!!");
-                }                
-            }
-        }
-
-        static void ListAccountName(string name)
-        {
-            Console.WriteLine(accountFullDetails[name]);
-        }
+            }       
+        }     
 
         static void ReturnToMainMenu()
         {
