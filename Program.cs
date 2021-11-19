@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 
 namespace SupportBank
 {
@@ -7,24 +8,19 @@ namespace SupportBank
     {
         static string fileFor2014 = @"C:\Users\Andrea.Fonderson\OneDrive - IRIS Software Group\Corndel Bootcamp\C Sharp Bootcamp\2 - SupportBank\Data Files\Transactions2014.csv";
         static string fileFor2015 = @"C:\Users\Andrea.Fonderson\OneDrive - IRIS Software Group\Corndel Bootcamp\C Sharp Bootcamp\2 - SupportBank\Data Files\DodgyTransactions2015.csv";
-        
 
-        static Dictionary<string, double> accountMoneyOwedOnly = new Dictionary<string, double>();
-        static Dictionary<string, string> accountFullDetails = new Dictionary<string, string>();
-
+        static Dictionary<string, Account> accountDetails = new Dictionary<string, Account>();
         static void Main(string[] args)
         {
-            ProgramStartUp();
+            StartUp();
         }
 
-        static void ProgramStartUp()
+        static void StartUp()
         {
-            LoadData.ExtractData(fileFor2014, accountFullDetails, accountMoneyOwedOnly);
-            if(accountFullDetails.Count > 0)
-            {
-                MainMenu();
-            }            
+            LoadData.LoadFile(fileFor2014, accountDetails);
+            MainMenu();
         }
+
         static void MainMenu()
         {
             Console.WriteLine("Please select the number of the task you want to carry out." +
@@ -34,10 +30,10 @@ namespace SupportBank
             switch (Console.ReadLine())
             {
                 case "1":
-                    ListAmountOutstanding.ListAllAccounts(accountMoneyOwedOnly);
+                    ListAccounts.AllAccounts(accountDetails);
                     break;
                 case "2":
-                    FullAccountTransactionListing.ListAll(accountFullDetails);
+                    ListAccounts.AccountTransactions(accountDetails);
                     break;
                 default:
                     Console.WriteLine("That was not a valid choice. Please try again.");
@@ -56,6 +52,6 @@ namespace SupportBank
             {
                 MainMenu();
             }
-        }
+        }                
     }
 }
