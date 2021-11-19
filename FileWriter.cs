@@ -9,9 +9,9 @@ namespace SupportBank
 {
     internal class FileWriter
     {
-        public static void WriteNewLine(string errorLine)
+        public static void WriteNewLine(string logLine)
         {
-            File.AppendAllText(@"\TestOutputFiles\SupportBankErrorLog.txt", String.Format($"{errorLine}"));
+            File.AppendAllText(@"\TestOutputFiles\SupportBankErrorLog.txt", String.Format($"{logLine}\n"));
         }
 
         public static void ClearLog()
